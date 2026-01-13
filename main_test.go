@@ -5,13 +5,13 @@ import (
 	"testing"
 )
 
-func assertBoardEquals(t *testing.T, result, expected Board) {
+func assertBoardEquals(t *testing.T, got, want Board) {
 	t.Helper()
 	for row := range 3 {
 		for col := range 3 {
-			if result[row][col] != expected[row][col] {
+			if got[row][col] != want[row][col] {
 				t.Errorf("board[%d][%d] = %s, want %s",
-					row, col, result[row][col], expected[row][col])
+					row, col, got[row][col], want[row][col])
 			}
 		}
 	}
@@ -171,6 +171,65 @@ func TestBoardConditions(t *testing.T) {
 					t.Errorf("Position %d: expected %s at [%d][%d], got %s",
 						tt.position, tt.player, tt.row, tt.col, board[tt.row][tt.col])
 				}
+			}
+		})
+	})
+
+	t.Run("display-board", func(t *testing.T) {
+
+		t.Run("empty board", func(t *testing.T) {
+			board := initBoard()
+
+			want := " 1 | 2 | 3 \n" +
+				"-----------\n" +
+				" 4 | 5 | 6 \n" +
+				"-----------\n" +
+				" 7 | 8 | 9 "
+
+			got := displayBoard(board)
+
+			if got != want {
+				t.Errorf("Board display mismatch.\nGot:\n%s\n\nWant:\n%s", got, want)
+			}
+		})
+
+		t.Run("board with moves", func(t *testing.T) {
+			board := Board{
+				{"X", "2", "O"},
+				{"4", "X", "6"},
+				{"O", "8", "9"},
+			}
+
+			want := " X | 2 | O \n" +
+				"-----------\n" +
+				" 4 | X | 6 \n" +
+				"-----------\n" +
+				" O | 8 | 9 "
+
+			got := displayBoard(board)
+
+			if got != want {
+				t.Errorf("Board display mismatch.\nGot:\n%s\n\nWant:\n%s", got, want)
+			}
+		})
+
+		t.Run("full board", func(t *testing.T) {
+			board := Board{
+				{"X", "O", "X"},
+				{"O", "X", "O"},
+				{"O", "X", "X"},
+			}
+
+			want := " X | O | X \n" +
+				"-----------\n" +
+				" O | X | O \n" +
+				"-----------\n" +
+				" O | X | X "
+
+			got := displayBoard(board)
+
+			if got != want {
+				t.Errorf("Board display mismatch")
 			}
 		})
 	})

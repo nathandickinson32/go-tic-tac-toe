@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Board [3][3]string
 
@@ -47,6 +50,21 @@ func makeMove(board *Board, position int, player string) bool {
 	return true
 }
 
+func displayBoard(board Board) string {
+	var display strings.Builder
+
+	for row := range 3 {
+		display.WriteString(" " + board[row][0] + " | " + board[row][1] + " | " + board[row][2] + " ")
+
+		if row < 2 {
+			display.WriteString("\n-----------\n")
+		}
+	}
+
+	return display.String()
+}
+
 func main() {
-	fmt.Println(initBoard())
+	board := initBoard()
+	fmt.Println(displayBoard(board))
 }
