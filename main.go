@@ -6,10 +6,17 @@ type Board [3][3]string
 
 func initBoard() Board {
 	var board Board
-	board[0][0] = "1"
+	num := 1
+
+	for i := range 3 {
+		for j := range 3 {
+			board[i][j] = fmt.Sprintf("%d", num)
+			num++
+		}
+	}
 	return board
 }
 
 func main() {
-	fmt.Println("Welcome to Tic-Tac-Toe!")
+	fmt.Println(initBoard())
 }
