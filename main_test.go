@@ -5,11 +5,23 @@ import (
 	"testing"
 )
 
+func assertBoardEquals(t *testing.T, result, expected Board) {
+	t.Helper()
+	for row := range 3 {
+		for col := range 3 {
+			if result[row][col] != expected[row][col] {
+				t.Errorf("board[%d][%d] = %s, want %s",
+					row, col, result[row][col], expected[row][col])
+			}
+		}
+	}
+}
+
 func TestBoardConditions(t *testing.T) {
 
 	t.Run("getting all positions", func(t *testing.T) {
 
-		t.Run("gets all 9 board positions for 3x3 board", func(t *testing.T) {
+		t.Run("gets all 9 board positions", func(t *testing.T) {
 			board := initBoard()
 
 			expected := [3][3]string{
@@ -18,20 +30,13 @@ func TestBoardConditions(t *testing.T) {
 				{"7", "8", "9"},
 			}
 
-			for i := range 3 {
-				for j := range 3 {
-					if board[i][j] != expected[i][j] {
-						t.Errorf("Expected board[%d][%d] to be '%s', got '%s'",
-							i, j, expected[i][j], board[i][j])
-					}
-				}
-			}
+			assertBoardEquals(t, board, expected)
 		})
 	})
 
-	t.Run("getting available 3x3 moves", func(t *testing.T) {
+	t.Run("getting available moves", func(t *testing.T) {
 
-		t.Run("gets one available move 3x3", func(t *testing.T) {
+		t.Run("gets one available move", func(t *testing.T) {
 			testBoard := Board{
 				{"O", "X", "O"},
 				{"X", "X", "O"},
@@ -49,7 +54,7 @@ func TestBoardConditions(t *testing.T) {
 			}
 		})
 
-		t.Run("gets all available moves for 3x3", func(t *testing.T) {
+		t.Run("gets all available moves", func(t *testing.T) {
 			testBoard := Board{
 				{"O", "X", "O"},
 				{"4", "X", "6"},
@@ -71,7 +76,7 @@ func TestBoardConditions(t *testing.T) {
 			}
 		})
 
-		t.Run("does not contain moves that are taken for 3x3", func(t *testing.T) {
+		t.Run("does not contain moves that are taken", func(t *testing.T) {
 			testBoard := Board{
 				{"O", "X", "O"},
 				{"4", "X", "6"},
@@ -91,4 +96,82 @@ func TestBoardConditions(t *testing.T) {
 		})
 	})
 
+	t.Run("make-move", func(t *testing.T) {
+
+		t.Run("invalid position", func(t *testing.T) {
+			board := initBoard()
+
+			if makeMove(&board, 0, "X") {
+				t.Error("position 0")
+			}
+
+			if makeMove(&board, 10, "X") {
+				t.Error("position 10")
+			}
+
+			if makeMove(&board, -1, "X") {
+				t.Error("negative position")
+			}
+		})
+
+		t.Run("occupied position", func(t *testing.T) {
+			board := initBoard()
+			makeMove(&board, 5, "X")
+
+			if makeMove(&board, 5, "O") {
+				t.Error("occupied position")
+			}
+		})
+
+		t.Run("marks with X", func(t *testing.T) {
+			board := initBoard()
+
+			makeMove(&board, 5, "X")
+
+			expectedBoard := Board{
+				{"1", "2", "3"},
+				{"4", "X", "6"},
+				{"7", "8", "9"},
+			}
+
+			assertBoardEquals(t, board, expectedBoard)
+		})
+
+		t.Run("marks with O", func(t *testing.T) {
+			board := initBoard()
+
+			makeMove(&board, 1, "O")
+
+			expectedBoard := Board{
+				{"O", "2", "3"},
+				{"4", "5", "6"},
+				{"7", "8", "9"},
+			}
+
+			assertBoardEquals(t, board, expectedBoard)
+		})
+
+		t.Run("marks correct positions", func(t *testing.T) {
+			tests := []struct {
+				position int
+				player   string
+				row      int
+				col      int
+			}{
+				{1, "X", 0, 0},
+				{5, "O", 1, 1},
+				{9, "X", 2, 2},
+			}
+
+			for _, tt := range tests {
+				board := initBoard()
+				makeMove(&board, tt.position, tt.player)
+
+				if board[tt.row][tt.col] != tt.player {
+					t.Errorf("Position %d: expected %s at [%d][%d], got %s",
+						tt.position, tt.player, tt.row, tt.col, board[tt.row][tt.col])
+				}
+			}
+		})
+	})
 }
