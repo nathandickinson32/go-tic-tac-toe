@@ -169,3 +169,142 @@ func TestMakeMove(t *testing.T) {
 		}
 	})
 }
+
+func TestCheckWinner(t *testing.T) {
+
+	t.Run("empty board", func(t *testing.T) {
+		board := initBoard()
+
+		got := checkWinner(board)
+
+		if got != "" {
+			t.Fatalf("expected no winner, got %q", got)
+		}
+	})
+
+	t.Run("row win for X", func(t *testing.T) {
+		board := Board{
+			{"X", "X", "X"},
+			{"4", "5", "6"},
+			{"7", "8", "9"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "X" {
+			t.Fatalf("got %q, want X", got)
+		}
+	})
+
+	t.Run("row win for O", func(t *testing.T) {
+		board := Board{
+			{"1", "2", "3"},
+			{"O", "O", "O"},
+			{"7", "8", "9"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "O" {
+			t.Fatalf("got %q, want O", got)
+		}
+	})
+
+	t.Run("third row win", func(t *testing.T) {
+		board := Board{
+			{"1", "2", "3"},
+			{"4", "5", "6"},
+			{"O", "O", "O"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "O" {
+			t.Fatalf("got %q, want O", got)
+		}
+	})
+
+	t.Run("column win for X", func(t *testing.T) {
+		board := Board{
+			{"1", "X", "3"},
+			{"4", "X", "6"},
+			{"7", "X", "9"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "X" {
+			t.Fatalf("got %q, want X", got)
+		}
+	})
+
+	t.Run("column win for O", func(t *testing.T) {
+		board := Board{
+			{"O", "2", "3"},
+			{"O", "5", "6"},
+			{"O", "8", "9"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "O" {
+			t.Fatalf("got %q, want O", got)
+		}
+	})
+
+	t.Run("third column win", func(t *testing.T) {
+		board := Board{
+			{"1", "2", "X"},
+			{"4", "5", "X"},
+			{"7", "8", "X"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "X" {
+			t.Fatalf("got %q, want X", got)
+		}
+	})
+
+	t.Run("diagonal win down right", func(t *testing.T) {
+		board := Board{
+			{"X", "2", "3"},
+			{"4", "X", "6"},
+			{"7", "8", "X"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "X" {
+			t.Fatalf("got %q, want X", got)
+		}
+	})
+
+	t.Run("diagonal win down left", func(t *testing.T) {
+		board := Board{
+			{"1", "2", "O"},
+			{"4", "O", "6"},
+			{"O", "8", "9"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "O" {
+			t.Fatalf("got %q, want O", got)
+		}
+	})
+
+	t.Run("full board no winner", func(t *testing.T) {
+		board := Board{
+			{"X", "O", "X"},
+			{"X", "O", "O"},
+			{"O", "X", "X"},
+		}
+
+		got := checkWinner(board)
+
+		if got != "" {
+			t.Fatalf("expected no winner, got %q", got)
+		}
+	})
+}

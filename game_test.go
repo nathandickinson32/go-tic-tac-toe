@@ -72,3 +72,37 @@ func TestPlayGame(t *testing.T) {
 		}
 	})
 }
+
+func TestEndGame(t *testing.T) {
+
+	t.Run("X wins", func(t *testing.T) {
+		input := "1\n4\n2\n5\n3\n"
+		output := runGame(input)
+
+		if !strings.Contains(output, "Player X wins!") {
+			t.Fatalf("winner not announced")
+		}
+
+		if strings.Count(output, "Enter your move") != 5 {
+			t.Fatalf("game should stop after 5 moves")
+		}
+	})
+
+	t.Run("O wins", func(t *testing.T) {
+		input := "1\n4\n2\n5\n9\n6\n"
+		output := runGame(input)
+
+		if !strings.Contains(output, "Player O wins!") {
+			t.Fatal("O should win")
+		}
+	})
+
+	t.Run("draw game", func(t *testing.T) {
+		input := "1\n2\n3\n5\n4\n6\n8\n7\n9\n"
+		output := runGame(input)
+
+		if !strings.Contains(output, "Game Over") {
+			t.Fatal("expected draw game over")
+		}
+	})
+}

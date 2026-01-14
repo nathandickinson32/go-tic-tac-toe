@@ -51,3 +51,28 @@ func makeMove(board *Board, position int, player string) bool {
 	}
 	return valid
 }
+
+func checkWinner(board Board) string {
+	lines := [8][3][2]int{
+		{{0, 0}, {0, 1}, {0, 2}},
+		{{1, 0}, {1, 1}, {1, 2}},
+		{{2, 0}, {2, 1}, {2, 2}},
+		{{0, 0}, {1, 0}, {2, 0}},
+		{{0, 1}, {1, 1}, {2, 1}},
+		{{0, 2}, {1, 2}, {2, 2}},
+		{{0, 0}, {1, 1}, {2, 2}},
+		{{0, 2}, {1, 1}, {2, 0}},
+	}
+
+	for _, line := range lines {
+		a := board[line[0][0]][line[0][1]]
+		b := board[line[1][0]][line[1][1]]
+		c := board[line[2][0]][line[2][1]]
+
+		if a == b && b == c {
+			return a
+		}
+	}
+
+	return ""
+}

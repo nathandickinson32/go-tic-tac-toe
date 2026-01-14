@@ -5,6 +5,15 @@ import (
 	"io"
 )
 
+type GameStatus int
+
+const (
+	InProgress GameStatus = iota
+	XWins
+	OWins
+	Draw
+)
+
 type Game struct {
 	board     Board
 	bufReader *bufio.Reader
@@ -26,6 +35,21 @@ func switchPlayer(currentPlayer string) string {
 	return "X"
 }
 
+func getGameStatus(board Board) GameStatus {
+	if winner := checkWinner(board); winner != "" {
+		if winner == "X" {
+			return XWins
+		}
+		return OWins
+	}
+
+	if len(getAvailableMoves(board)) == 0 {
+		return Draw
+	}
+
+	return InProgress
+}
+
 func (game *Game) takeTurns() {
 	currentPlayer := "X"
 
@@ -33,13 +57,14 @@ func (game *Game) takeTurns() {
 		displayPlayerTurn(currentPlayer, game.bufWriter)
 
 		position := getValidUserMove(&game.board, game.bufReader, game.bufWriter)
-
 		makeMove(&game.board, position, currentPlayer)
+
 		displayCurrentBoard(game.board, game.bufWriter)
 
-		moves := getAvailableMoves(game.board)
-		if len(moves) == 0 {
-			displayGameOver(game.bufWriter)
+		status := getGameStatus(game.board)
+
+		if status != InProgress {
+			game.displayEndResult(status)
 			break
 		}
 
