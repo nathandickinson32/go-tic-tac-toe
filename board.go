@@ -1,17 +1,17 @@
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
-type Board [3][3]string
+const boardSize = 3
 
-func initBoard() Board {
+type Board [boardSize][boardSize]string
+
+func NewBoard() Board {
 	var board Board
 	cell := 1
 
-	for row := range 3 {
-		for col := range 3 {
+	for row := range boardSize {
+		for col := range boardSize {
 			board[row][col] = fmt.Sprintf("%d", cell)
 			cell++
 		}
@@ -19,11 +19,11 @@ func initBoard() Board {
 	return board
 }
 
-func getAvailableMoves(board Board) []int {
+func (board Board) AvailableMoves() []int {
 	var moves []int
 	cell := 1
-	for row := range 3 {
-		for col := range 3 {
+	for row := range boardSize {
+		for col := range boardSize {
 			if board[row][col] != "X" && board[row][col] != "O" {
 				moves = append(moves, cell)
 			}
@@ -33,46 +33,20 @@ func getAvailableMoves(board Board) []int {
 	return moves
 }
 
-func isValidMove(board *Board, position int, row int, col int) bool {
-	if position < 1 || position > 9 || board[row][col] == "X" || board[row][col] == "O" {
-		return false
-	}
-	return true
+func (board Board) getCoordinates(position int) (row, col int) {
+	return (position - 1) / boardSize, (position - 1) % boardSize
 }
 
-func makeMove(board *Board, position int, player string) bool {
-	row := (position - 1) / 3
-	col := (position - 1) % 3
-
-	valid := isValidMove(board, position, row, col)
-
-	if valid {
-		board[row][col] = player
-	}
-	return valid
-}
-
-func checkWinner(board Board) string {
-	lines := [8][3][2]int{
-		{{0, 0}, {0, 1}, {0, 2}},
-		{{1, 0}, {1, 1}, {1, 2}},
-		{{2, 0}, {2, 1}, {2, 2}},
-		{{0, 0}, {1, 0}, {2, 0}},
-		{{0, 1}, {1, 1}, {2, 1}},
-		{{0, 2}, {1, 2}, {2, 2}},
-		{{0, 0}, {1, 1}, {2, 2}},
-		{{0, 2}, {1, 1}, {2, 0}},
+func (board *Board) MakeMove(position int, player string) error {
+	if position < 1 || position > 9 {
+		return fmt.Errorf("position must be between 1 and 9")
 	}
 
-	for _, line := range lines {
-		a := board[line[0][0]][line[0][1]]
-		b := board[line[1][0]][line[1][1]]
-		c := board[line[2][0]][line[2][1]]
-
-		if a == b && b == c {
-			return a
-		}
+	row, col := board.getCoordinates(position)
+	if board[row][col] == "X" || board[row][col] == "O" {
+		return fmt.Errorf("position already taken")
 	}
 
-	return ""
+	board[row][col] = player
+	return nil
 }

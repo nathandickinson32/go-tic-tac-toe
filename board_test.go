@@ -17,9 +17,9 @@ func assertBoardEquals(t *testing.T, got, want Board) {
 	}
 }
 
-func TestInitBoard(t *testing.T) {
+func TestBoard_Initialize(t *testing.T) {
 	t.Run("gets all 9 board positions", func(t *testing.T) {
-		board := initBoard()
+		board := NewBoard()
 
 		expected := [3][3]string{
 			{"1", "2", "3"},
@@ -31,7 +31,7 @@ func TestInitBoard(t *testing.T) {
 	})
 }
 
-func TestGetAvailableMoves(t *testing.T) {
+func TestBoard_AvailableMoves(t *testing.T) {
 	t.Run("gets one available move", func(t *testing.T) {
 		testBoard := Board{
 			{"O", "X", "O"},
@@ -39,7 +39,7 @@ func TestGetAvailableMoves(t *testing.T) {
 			{"X", "O", "9"},
 		}
 
-		moves := getAvailableMoves(testBoard)
+		moves := testBoard.AvailableMoves()
 
 		if len(moves) != 1 {
 			t.Fatalf("Expected 1 available move, got %d", len(moves))
@@ -57,7 +57,7 @@ func TestGetAvailableMoves(t *testing.T) {
 			{"X", "O", "9"},
 		}
 
-		moves := getAvailableMoves(testBoard)
+		moves := testBoard.AvailableMoves()
 
 		if len(moves) != 3 {
 			t.Fatalf("Expected 3 available moves, got %d", len(moves))
@@ -79,7 +79,7 @@ func TestGetAvailableMoves(t *testing.T) {
 			{"X", "O", "9"},
 		}
 
-		moves := getAvailableMoves(testBoard)
+		moves := testBoard.AvailableMoves()
 
 		takenPositions := []int{1, 2, 3, 5, 7, 8}
 		for _, taken := range takenPositions {
@@ -90,38 +90,51 @@ func TestGetAvailableMoves(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("empty board returns all moves", func(t *testing.T) {
+		board := NewBoard()
+		moves := board.AvailableMoves()
+
+		if len(moves) != 9 {
+			t.Errorf("Expected 9 available moves on empty board, got %d", len(moves))
+		}
+	})
 }
 
-func TestMakeMove(t *testing.T) {
-	t.Run("invalid position", func(t *testing.T) {
-		board := initBoard()
+func TestBoard_MakeMove(t *testing.T) {
+	t.Run("invalid position returns error", func(t *testing.T) {
+		board := NewBoard()
 
-		if makeMove(&board, 0, "X") {
-			t.Error("position 0")
+		if err := board.MakeMove(0, "X"); err == nil {
+			t.Error("position 0 should return error")
 		}
 
-		if makeMove(&board, 10, "X") {
-			t.Error("position 10")
+		if err := board.MakeMove(10, "X"); err == nil {
+			t.Error("position 10 should return error")
 		}
 
-		if makeMove(&board, -1, "X") {
-			t.Error("negative position")
+		if err := board.MakeMove(-1, "X"); err == nil {
+			t.Error("negative position should return error")
 		}
 	})
 
-	t.Run("occupied position", func(t *testing.T) {
-		board := initBoard()
-		makeMove(&board, 5, "X")
+	t.Run("occupied position returns error", func(t *testing.T) {
+		board := NewBoard()
+		board.MakeMove(5, "X")
 
-		if makeMove(&board, 5, "O") {
-			t.Error("occupied position")
+		if err := board.MakeMove(5, "O"); err == nil {
+			t.Error("occupied position should return error")
 		}
 	})
 
 	t.Run("marks with X", func(t *testing.T) {
-		board := initBoard()
+		board := NewBoard()
 
-		makeMove(&board, 5, "X")
+		err := board.MakeMove(5, "X")
+
+		if err != nil {
+			t.Errorf("valid move should not return error: %v", err)
+		}
 
 		expectedBoard := Board{
 			{"1", "2", "3"},
@@ -133,9 +146,13 @@ func TestMakeMove(t *testing.T) {
 	})
 
 	t.Run("marks with O", func(t *testing.T) {
-		board := initBoard()
+		board := NewBoard()
 
-		makeMove(&board, 1, "O")
+		err := board.MakeMove(1, "O")
+
+		if err != nil {
+			t.Errorf("valid move should not return error: %v", err)
+		}
 
 		expectedBoard := Board{
 			{"O", "2", "3"},
@@ -156,11 +173,16 @@ func TestMakeMove(t *testing.T) {
 			{1, "X", 0, 0},
 			{5, "O", 1, 1},
 			{9, "X", 2, 2},
+			{2, "O", 0, 1},
+			{7, "X", 2, 0},
 		}
 
 		for _, tt := range tests {
-			board := initBoard()
-			makeMove(&board, tt.position, tt.player)
+			board := NewBoard()
+			err := board.MakeMove(tt.position, tt.player)
+			if err != nil {
+				t.Errorf("Position %d: unexpected error: %v", tt.position, err)
+			}
 
 			if board[tt.row][tt.col] != tt.player {
 				t.Errorf("Position %d: expected %s at [%d][%d], got %s",
@@ -168,143 +190,32 @@ func TestMakeMove(t *testing.T) {
 			}
 		}
 	})
-}
 
-func TestCheckWinner(t *testing.T) {
+	t.Run("multiple moves", func(t *testing.T) {
+		board := NewBoard()
 
-	t.Run("empty board", func(t *testing.T) {
-		board := initBoard()
-
-		got := checkWinner(board)
-
-		if got != "" {
-			t.Fatalf("expected no winner, got %q", got)
-		}
-	})
-
-	t.Run("row win for X", func(t *testing.T) {
-		board := Board{
-			{"X", "X", "X"},
-			{"4", "5", "6"},
-			{"7", "8", "9"},
+		moves := []struct {
+			position int
+			player   string
+		}{
+			{1, "X"},
+			{2, "O"},
+			{5, "X"},
+			{9, "O"},
 		}
 
-		got := checkWinner(board)
-
-		if got != "X" {
-			t.Fatalf("got %q, want X", got)
-		}
-	})
-
-	t.Run("row win for O", func(t *testing.T) {
-		board := Board{
-			{"1", "2", "3"},
-			{"O", "O", "O"},
-			{"7", "8", "9"},
+		for _, move := range moves {
+			if err := board.MakeMove(move.position, move.player); err != nil {
+				t.Errorf("move %d for %s should be valid: %v", move.position, move.player, err)
+			}
 		}
 
-		got := checkWinner(board)
-
-		if got != "O" {
-			t.Fatalf("got %q, want O", got)
-		}
-	})
-
-	t.Run("third row win", func(t *testing.T) {
-		board := Board{
-			{"1", "2", "3"},
-			{"4", "5", "6"},
-			{"O", "O", "O"},
-		}
-
-		got := checkWinner(board)
-
-		if got != "O" {
-			t.Fatalf("got %q, want O", got)
-		}
-	})
-
-	t.Run("column win for X", func(t *testing.T) {
-		board := Board{
-			{"1", "X", "3"},
+		expected := Board{
+			{"X", "O", "3"},
 			{"4", "X", "6"},
-			{"7", "X", "9"},
+			{"7", "8", "O"},
 		}
 
-		got := checkWinner(board)
-
-		if got != "X" {
-			t.Fatalf("got %q, want X", got)
-		}
-	})
-
-	t.Run("column win for O", func(t *testing.T) {
-		board := Board{
-			{"O", "2", "3"},
-			{"O", "5", "6"},
-			{"O", "8", "9"},
-		}
-
-		got := checkWinner(board)
-
-		if got != "O" {
-			t.Fatalf("got %q, want O", got)
-		}
-	})
-
-	t.Run("third column win", func(t *testing.T) {
-		board := Board{
-			{"1", "2", "X"},
-			{"4", "5", "X"},
-			{"7", "8", "X"},
-		}
-
-		got := checkWinner(board)
-
-		if got != "X" {
-			t.Fatalf("got %q, want X", got)
-		}
-	})
-
-	t.Run("diagonal win down right", func(t *testing.T) {
-		board := Board{
-			{"X", "2", "3"},
-			{"4", "X", "6"},
-			{"7", "8", "X"},
-		}
-
-		got := checkWinner(board)
-
-		if got != "X" {
-			t.Fatalf("got %q, want X", got)
-		}
-	})
-
-	t.Run("diagonal win down left", func(t *testing.T) {
-		board := Board{
-			{"1", "2", "O"},
-			{"4", "O", "6"},
-			{"O", "8", "9"},
-		}
-
-		got := checkWinner(board)
-
-		if got != "O" {
-			t.Fatalf("got %q, want O", got)
-		}
-	})
-
-	t.Run("full board no winner", func(t *testing.T) {
-		board := Board{
-			{"X", "O", "X"},
-			{"X", "O", "O"},
-			{"O", "X", "X"},
-		}
-
-		got := checkWinner(board)
-
-		if got != "" {
-			t.Fatalf("expected no winner, got %q", got)
-		}
+		assertBoardEquals(t, board, expected)
 	})
 }

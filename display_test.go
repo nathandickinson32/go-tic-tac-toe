@@ -6,9 +6,35 @@ import (
 	"testing"
 )
 
-func TestDisplayBoard(t *testing.T) {
+func TestConsoleOutput_ShowModeSelection(t *testing.T) {
+	var output bytes.Buffer
+	co := NewConsoleOutput(&output)
+
+	co.ShowModeSelection()
+
+	got := output.String()
+
+	wantMessages := []string{
+		"Tic-Tac-Toe Game Modes",
+		"1. Human vs Human",
+		"2. Human vs AI",
+		"3. AI vs AI",
+		"Select mode (1-3): ",
+	}
+
+	for _, want := range wantMessages {
+		if !strings.Contains(got, want) {
+			t.Errorf("output missing expected message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+		}
+	}
+}
+
+func TestConsoleOutput_FormatBoard(t *testing.T) {
+	var output bytes.Buffer
+	co := NewConsoleOutput(&output)
+
 	t.Run("empty board", func(t *testing.T) {
-		board := initBoard()
+		board := NewBoard()
 
 		want := " 1 | 2 | 3 \n" +
 			"-----------\n" +
@@ -16,7 +42,7 @@ func TestDisplayBoard(t *testing.T) {
 			"-----------\n" +
 			" 7 | 8 | 9 "
 
-		got := displayBoard(board)
+		got := co.formatBoard(board)
 
 		if got != want {
 			t.Errorf("Board display mismatch.\nGot:\n%s\n\nWant:\n%s", got, want)
@@ -36,7 +62,7 @@ func TestDisplayBoard(t *testing.T) {
 			"-----------\n" +
 			" O | 8 | 9 "
 
-		got := displayBoard(board)
+		got := co.formatBoard(board)
 
 		if got != want {
 			t.Errorf("Board display mismatch.\nGot:\n%s\n\nWant:\n%s", got, want)
@@ -56,7 +82,7 @@ func TestDisplayBoard(t *testing.T) {
 			"-----------\n" +
 			" O | X | X "
 
-		got := displayBoard(board)
+		got := co.formatBoard(board)
 
 		if got != want {
 			t.Errorf("Board display mismatch")
@@ -64,106 +90,146 @@ func TestDisplayBoard(t *testing.T) {
 	})
 }
 
-func TestDisplayInputErrors(t *testing.T) {
+func TestConsoleOutput_ShowWelcome(t *testing.T) {
+	var output bytes.Buffer
+	co := NewConsoleOutput(&output)
 
-	t.Run("displays prompt", func(t *testing.T) {
-		board := initBoard()
-		input := "5\n"
+	co.ShowWelcome()
+
+	want := "Welcome to Tic-Tac-Toe!"
+	got := output.String()
+
+	if !strings.Contains(got, want) {
+		t.Errorf("output missing welcome message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+	}
+}
+
+func TestConsoleOutput_ShowBoard(t *testing.T) {
+	var output bytes.Buffer
+	co := NewConsoleOutput(&output)
+
+	board := Board{
+		{"X", "2", "3"},
+		{"4", "O", "6"},
+		{"7", "8", "9"},
+	}
+
+	co.ShowBoard(board)
+
+	got := output.String()
+
+	if !strings.Contains(got, " X | 2 | 3 ") {
+		t.Error("board first row not displayed correctly")
+	}
+
+	if !strings.Contains(got, " 4 | O | 6 ") {
+		t.Error("board second row not displayed correctly")
+	}
+
+	if !strings.Contains(got, "-----------") {
+		t.Error("board separator not displayed")
+	}
+}
+
+func TestConsoleOutput_ShowPlayerTurn(t *testing.T) {
+	var output bytes.Buffer
+	co := NewConsoleOutput(&output)
+
+	co.ShowPlayerTurn("X")
+
+	want := "Player X's turn"
+	got := output.String()
+
+	if !strings.Contains(got, want) {
+		t.Errorf("output missing player turn.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+	}
+}
+
+func TestConsoleOutput_ShowPrompt(t *testing.T) {
+	var output bytes.Buffer
+	co := NewConsoleOutput(&output)
+
+	co.ShowPrompt()
+
+	want := "Enter your move (1-9): "
+	got := output.String()
+
+	if !strings.Contains(got, want) {
+		t.Errorf("output missing prompt.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+	}
+}
+
+type testError struct {
+	msg string
+}
+
+func (e testError) Error() string {
+	return e.msg
+}
+
+func TestInputValidation(t *testing.T) {
+	t.Run("rejects invalid input and continues", func(t *testing.T) {
+		input := "abc\n10\n-1\n1\n1\n2\n3\n5\n4\n6\n8\n7\n9\n"
+		output := runGame(input)
+
+		if !strings.Contains(output, "Invalid input: Input must be a number") {
+			t.Error("should show error for non-number")
+		}
+
+		if !strings.Contains(output, "Invalid input: Position must be between 1 and 9") {
+			t.Error("should show error for out of range")
+		}
+
+		if !strings.Contains(output, "Game Over") {
+			t.Error("game should complete after invalid input")
+		}
+
+		if !strings.Contains(output, "Position already taken") {
+			t.Error("should show error for occupied position")
+		}
+	})
+}
+
+func TestConsoleOutput_ShowWinner(t *testing.T) {
+	t.Run("X wins", func(t *testing.T) {
 		var output bytes.Buffer
+		co := NewConsoleOutput(&output)
 
-		getUserMove(&board, strings.NewReader(input), &output)
+		co.ShowWinner("X")
 
-		want := "Enter your move (1-9): "
+		want := "Player X wins!"
 		got := output.String()
 
 		if !strings.Contains(got, want) {
-			t.Errorf("output missing prompt.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+			t.Errorf("output missing winner message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
 		}
 	})
 
-	t.Run("empty input", func(t *testing.T) {
-		board := initBoard()
-		input := "\n5\n"
+	t.Run("O wins", func(t *testing.T) {
 		var output bytes.Buffer
+		co := NewConsoleOutput(&output)
 
-		getUserMove(&board, strings.NewReader(input), &output)
+		co.ShowWinner("O")
 
-		want := "Invalid input: Input cannot be empty"
+		want := "Player O wins!"
 		got := output.String()
 
 		if !strings.Contains(got, want) {
-			t.Errorf("output missing error message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+			t.Errorf("output missing winner message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
 		}
 	})
+}
 
-	t.Run("non-number", func(t *testing.T) {
-		board := initBoard()
-		input := "abc\n5\n"
-		var output bytes.Buffer
+func TestConsoleOutput_ShowDraw(t *testing.T) {
+	var output bytes.Buffer
+	co := NewConsoleOutput(&output)
 
-		getUserMove(&board, strings.NewReader(input), &output)
+	co.ShowDraw()
 
-		want := "Invalid input: Input must be a number"
-		got := output.String()
+	want := "Game Over! Board is full."
+	got := output.String()
 
-		if !strings.Contains(got, want) {
-			t.Errorf("output missing error message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
-		}
-	})
-
-	t.Run("out of range", func(t *testing.T) {
-		board := initBoard()
-		input := "10\n5\n"
-		var output bytes.Buffer
-
-		getUserMove(&board, strings.NewReader(input), &output)
-
-		want := "Invalid input: Position must be between 1 and 9"
-		got := output.String()
-
-		if !strings.Contains(got, want) {
-			t.Errorf("output missing error message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
-		}
-	})
-
-	t.Run("occupied position", func(t *testing.T) {
-		board := initBoard()
-		makeMove(&board, 5, "X")
-		input := "5\n7\n"
-		var output bytes.Buffer
-
-		getUserMove(&board, strings.NewReader(input), &output)
-
-		want := "Position already taken, try again"
-		got := output.String()
-
-		if !strings.Contains(got, want) {
-			t.Errorf("output missing error message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
-		}
-	})
-
-	t.Run("multiple errors", func(t *testing.T) {
-		board := initBoard()
-		makeMove(&board, 1, "X")
-		input := "\nabc\n10\n1\n5\n"
-		var output bytes.Buffer
-
-		getUserMove(&board, strings.NewReader(input), &output)
-
-		got := output.String()
-
-		wantMessages := []string{
-			"Invalid input: Input cannot be empty",
-			"Invalid input: Input must be a number",
-			"Invalid input: Position must be between 1 and 9",
-			"Position already taken, try again",
-		}
-
-		for _, want := range wantMessages {
-			if !strings.Contains(got, want) {
-				t.Errorf("output missing error: %q\nGot:\n%s", want, got)
-			}
-		}
-	})
-
+	if !strings.Contains(got, want) {
+		t.Errorf("output missing draw message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+	}
 }

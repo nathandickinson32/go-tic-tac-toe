@@ -3,42 +3,82 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"strings"
 )
 
-func displayWelcome(writer *bufio.Writer) {
-	fmt.Fprintln(writer, "Welcome to Tic-Tac-Toe!")
-	writer.Flush()
+type ConsoleOutput struct {
+	writer *bufio.Writer
 }
 
-func displayCurrentBoard(board Board, writer *bufio.Writer) {
-	fmt.Fprintln(writer, "")
-	fmt.Fprintln(writer, displayBoard(board))
-	fmt.Fprintln(writer, "")
-	writer.Flush()
+func NewConsoleOutput(writer io.Writer) *ConsoleOutput {
+	return &ConsoleOutput{
+		writer: bufio.NewWriter(writer),
+	}
 }
 
-func displayPlayerTurn(player string, writer *bufio.Writer) {
-	fmt.Fprintf(writer, "Player %s's turn\n", player)
-	writer.Flush()
+func (co *ConsoleOutput) ShowWelcome() {
+	fmt.Fprintln(co.writer, "Welcome to Tic-Tac-Toe!")
+	co.writer.Flush()
 }
 
-func displayPrompt(writer *bufio.Writer) {
-	fmt.Fprint(writer, "Enter your move (1-9): ")
-	writer.Flush()
+func (co *ConsoleOutput) ShowBoard(board Board) {
+	fmt.Fprintln(co.writer, "")
+	fmt.Fprintln(co.writer, co.formatBoard(board))
+	fmt.Fprintln(co.writer, "")
+	co.writer.Flush()
 }
 
-func displayInvalidInput(err error, writer *bufio.Writer) {
-	fmt.Fprintf(writer, "Invalid input: %v\n", err)
-	writer.Flush()
+func (co *ConsoleOutput) ShowPlayerTurn(player string) {
+	fmt.Fprintf(co.writer, "Player %s's turn\n", player)
+	co.writer.Flush()
 }
 
-func displayPositionTaken(writer *bufio.Writer) {
-	fmt.Fprintln(writer, "Position already taken, try again")
-	writer.Flush()
+func (co *ConsoleOutput) ShowPrompt() {
+	fmt.Fprint(co.writer, "Enter your move (1-9): ")
+	co.writer.Flush()
 }
 
-func displayBoard(board Board) string {
+func (co *ConsoleOutput) ShowInvalidInput(err error) {
+	fmt.Fprintf(co.writer, "Invalid input: %v\n", err)
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) ShowPositionTaken() {
+	fmt.Fprintln(co.writer, "Position already taken, try again")
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) ShowWinner(player string) {
+	fmt.Fprintf(co.writer, "Player %s wins!\n", player)
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) ShowDraw() {
+	fmt.Fprintln(co.writer, "Game Over! Board is full.")
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) ShowModeSelection() {
+	fmt.Fprintln(co.writer, "Tic-Tac-Toe Game Modes")
+	fmt.Fprintln(co.writer, "1. Human vs Human")
+	fmt.Fprintln(co.writer, "2. Human vs AI")
+	fmt.Fprintln(co.writer, "3. AI vs AI")
+	fmt.Fprint(co.writer, "Select mode (1-3): ")
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) ShowModeStart(message string) {
+	fmt.Fprintf(co.writer, "Starting %s mode...\n", message)
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) ShowNewline() {
+	fmt.Fprintln(co.writer, "")
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) formatBoard(board Board) string {
 	var display strings.Builder
 
 	for row := range 3 {
@@ -50,25 +90,4 @@ func displayBoard(board Board) string {
 	}
 
 	return display.String()
-}
-
-func displayDrawGame(writer *bufio.Writer) {
-	fmt.Fprintln(writer, "Game Over! Board is full.")
-	writer.Flush()
-}
-
-func displayWinner(player string, w *bufio.Writer) {
-	w.WriteString("Player " + player + " wins!\n")
-	w.Flush()
-}
-
-func (game *Game) displayEndResult(status GameStatus) {
-	switch status {
-	case XWins:
-		displayWinner("X", game.bufWriter)
-	case OWins:
-		displayWinner("O", game.bufWriter)
-	case Draw:
-		displayDrawGame(game.bufWriter)
-	}
 }

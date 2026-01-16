@@ -8,7 +8,47 @@ import (
 	"strings"
 )
 
-func parseInput(input string) (int, error) {
+type ConsoleInput struct {
+	reader *bufio.Reader
+	output *ConsoleOutput
+}
+
+func NewConsoleInput(reader io.Reader, output *ConsoleOutput) *ConsoleInput {
+	return &ConsoleInput{
+		reader: bufio.NewReader(reader),
+		output: output,
+	}
+}
+
+func (ci *ConsoleInput) ReadMove(board Board) (int, error) {
+	for {
+		line, err := ci.promptAndReadLine()
+		if err != nil {
+			return 0, err
+		}
+
+		position, err := ci.parseInput(line)
+		if err != nil {
+			ci.output.ShowInvalidInput(err)
+			continue
+		}
+
+		boardCopy := board
+		if err := boardCopy.MakeMove(position, "X"); err != nil {
+			ci.output.ShowPositionTaken()
+			continue
+		}
+
+		return position, nil
+	}
+}
+
+func (ci *ConsoleInput) promptAndReadLine() (string, error) {
+	ci.output.ShowPrompt()
+	return ci.reader.ReadString('\n')
+}
+
+func (ci *ConsoleInput) parseInput(input string) (int, error) {
 	input = strings.TrimSpace(input)
 
 	if input == "" {
@@ -25,48 +65,4 @@ func parseInput(input string) (int, error) {
 	}
 
 	return position, nil
-}
-
-func getUserMove(board *Board, reader io.Reader, writer io.Writer) int {
-	bufReader := bufio.NewReader(reader)
-	var bufWriter *bufio.Writer
-	if writer != nil {
-		bufWriter = bufio.NewWriter(writer)
-		defer bufWriter.Flush()
-	}
-	return getValidUserMove(board, bufReader, bufWriter)
-}
-
-func getValidUserMove(board *Board, bufReader *bufio.Reader, bufWriter *bufio.Writer) int {
-	for {
-		if bufWriter != nil {
-			displayPrompt(bufWriter)
-		}
-
-		line, err := bufReader.ReadString('\n')
-		if err != nil {
-			return 0
-		}
-
-		position, parseErr := parseInput(line)
-
-		if parseErr != nil {
-			if bufWriter != nil {
-				displayInvalidInput(parseErr, bufWriter)
-			}
-			continue
-		}
-
-		row := (position - 1) / 3
-		col := (position - 1) % 3
-
-		if board[row][col] == "X" || board[row][col] == "O" {
-			if bufWriter != nil {
-				displayPositionTaken(bufWriter)
-			}
-			continue
-		}
-
-		return position
-	}
 }
