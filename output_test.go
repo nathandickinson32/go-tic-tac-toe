@@ -1,33 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"strings"
 	"testing"
 )
-
-func TestConsoleOutput_ShowModeSelection(t *testing.T) {
-	var output bytes.Buffer
-	co := NewConsoleOutput(&output)
-
-	co.ShowModeSelection()
-
-	got := output.String()
-
-	wantMessages := []string{
-		"Tic-Tac-Toe Game Modes",
-		"1. Human vs Human",
-		"2. Human vs AI",
-		"3. AI vs AI",
-		"Select mode (1-3): ",
-	}
-
-	for _, want := range wantMessages {
-		if !strings.Contains(got, want) {
-			t.Errorf("output missing expected message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
-		}
-	}
-}
 
 func TestConsoleOutput_FormatBoard(t *testing.T) {
 	var output bytes.Buffer
@@ -45,7 +23,7 @@ func TestConsoleOutput_FormatBoard(t *testing.T) {
 		got := co.formatBoard(board)
 
 		if got != want {
-			t.Errorf("Board display mismatch.\nGot:\n%s\n\nWant:\n%s", got, want)
+			t.Errorf("Board mismatch.\nGot:\n%s\n\nWant:\n%s", got, want)
 		}
 	})
 
@@ -65,7 +43,7 @@ func TestConsoleOutput_FormatBoard(t *testing.T) {
 		got := co.formatBoard(board)
 
 		if got != want {
-			t.Errorf("Board display mismatch.\nGot:\n%s\n\nWant:\n%s", got, want)
+			t.Errorf("Board mismatch.\nGot:\n%s\n\nWant:\n%s", got, want)
 		}
 	})
 
@@ -85,7 +63,7 @@ func TestConsoleOutput_FormatBoard(t *testing.T) {
 		got := co.formatBoard(board)
 
 		if got != want {
-			t.Errorf("Board display mismatch")
+			t.Errorf("Board mismatch")
 		}
 	})
 }
@@ -100,7 +78,7 @@ func TestConsoleOutput_ShowWelcome(t *testing.T) {
 	got := output.String()
 
 	if !strings.Contains(got, want) {
-		t.Errorf("output missing welcome message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+		t.Errorf("output missing.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
 	}
 }
 
@@ -119,15 +97,15 @@ func TestConsoleOutput_ShowBoard(t *testing.T) {
 	got := output.String()
 
 	if !strings.Contains(got, " X | 2 | 3 ") {
-		t.Error("board first row not displayed correctly")
+		t.Error("first row not displayed")
 	}
 
 	if !strings.Contains(got, " 4 | O | 6 ") {
-		t.Error("board second row not displayed correctly")
+		t.Error("second row not displayed")
 	}
 
 	if !strings.Contains(got, "-----------") {
-		t.Error("board separator not displayed")
+		t.Error("separator not displayed")
 	}
 }
 
@@ -141,7 +119,7 @@ func TestConsoleOutput_ShowPlayerTurn(t *testing.T) {
 	got := output.String()
 
 	if !strings.Contains(got, want) {
-		t.Errorf("output missing player turn.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+		t.Errorf("missing player turn.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
 	}
 }
 
@@ -155,7 +133,7 @@ func TestConsoleOutput_ShowPrompt(t *testing.T) {
 	got := output.String()
 
 	if !strings.Contains(got, want) {
-		t.Errorf("output missing prompt.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+		t.Errorf("missing prompt.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
 	}
 }
 
@@ -170,21 +148,33 @@ func (e testError) Error() string {
 func TestInputValidation(t *testing.T) {
 	t.Run("rejects invalid input and continues", func(t *testing.T) {
 		input := "abc\n10\n-1\n1\n1\n2\n3\n5\n4\n6\n8\n7\n9\n"
-		output := runGame(input)
+		reader := strings.NewReader(input)
+		var output bytes.Buffer
 
-		if !strings.Contains(output, "Invalid input: Input must be a number") {
+		rules := NewGameRules()
+		consoleOutput := NewConsoleOutput(&output)
+		consoleInput := NewConsoleInput(bufio.NewReader(reader), consoleOutput)
+		game := NewGame(rules, consoleInput, consoleInput, consoleOutput, "X")
+
+		consoleOutput.ShowWelcome()
+		consoleOutput.ShowBoard(NewBoard())
+		game.playTurns()
+
+		result := output.String()
+
+		if !strings.Contains(result, "Invalid input: Input must be a number") {
 			t.Error("should show error for non-number")
 		}
 
-		if !strings.Contains(output, "Invalid input: Position must be between 1 and 9") {
+		if !strings.Contains(result, "Invalid input: Position must be between 1 and 9") {
 			t.Error("should show error for out of range")
 		}
 
-		if !strings.Contains(output, "Game Over") {
+		if !strings.Contains(result, "Game Over") {
 			t.Error("game should complete after invalid input")
 		}
 
-		if !strings.Contains(output, "Position already taken") {
+		if !strings.Contains(result, "Position already taken") {
 			t.Error("should show error for occupied position")
 		}
 	})
@@ -201,7 +191,7 @@ func TestConsoleOutput_ShowWinner(t *testing.T) {
 		got := output.String()
 
 		if !strings.Contains(got, want) {
-			t.Errorf("output missing winner message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+			t.Errorf("missing winner message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
 		}
 	})
 
@@ -215,7 +205,7 @@ func TestConsoleOutput_ShowWinner(t *testing.T) {
 		got := output.String()
 
 		if !strings.Contains(got, want) {
-			t.Errorf("output missing winner message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+			t.Errorf("missing winner message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
 		}
 	})
 }
@@ -230,6 +220,70 @@ func TestConsoleOutput_ShowDraw(t *testing.T) {
 	got := output.String()
 
 	if !strings.Contains(got, want) {
-		t.Errorf("output missing draw message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
+		t.Errorf("missing draw message.\nGot:\n%s\n\nWant to contain:\n%s", got, want)
 	}
+}
+
+func TestConsoleOutput_BuildGame(t *testing.T) {
+	var output bytes.Buffer
+	co := NewConsoleOutput(&output)
+
+	t.Run("shows player type selection", func(t *testing.T) {
+		co.ShowPlayerTypeSelection("X")
+
+		result := output.String()
+
+		if !strings.Contains(result, "Select Player X type:") {
+			t.Error("should show player selection prompt")
+		}
+
+		if !strings.Contains(result, "1. Human") {
+			t.Error("should show Human option")
+		}
+
+		if !strings.Contains(result, "2. AI") {
+			t.Error("should show AI option")
+		}
+	})
+
+	t.Run("shows first player selection", func(t *testing.T) {
+		output.Reset()
+		co.ShowFirstPlayerSelection()
+
+		result := output.String()
+
+		if !strings.Contains(result, "Who goes first?") {
+			t.Error("should show who goes first prompt")
+		}
+
+		if !strings.Contains(result, "1. Player X") {
+			t.Error("should show Player X option")
+		}
+
+		if !strings.Contains(result, "2. Player O") {
+			t.Error("should show Player O option")
+		}
+	})
+
+	t.Run("shows play again prompt", func(t *testing.T) {
+		output.Reset()
+		co.ShowPlayAgainPrompt()
+
+		result := output.String()
+
+		if !strings.Contains(result, "Play again? (y/n):") {
+			t.Error("should show play again prompt")
+		}
+	})
+
+	t.Run("shows goodbye message", func(t *testing.T) {
+		output.Reset()
+		co.ShowGoodbye()
+
+		result := output.String()
+
+		if !strings.Contains(result, "Thanks for playing!") {
+			t.Error("should show goodbye message")
+		}
+	})
 }

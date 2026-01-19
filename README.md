@@ -1,66 +1,70 @@
 # Go Tic-Tac-Toe
 
-A command-line Tic-Tac-Toe game written in Go with three game modes and an unbeatable AI opponent using the minimax algorithm.
-
-## Features
-
-- **Three Game Modes:**
-  - Human vs Human
-  - Human vs AI
-  - AI vs AI
-
-- **Unbeatable AI:** Implements the minimax algorithm with depth-based scoring for optimal play
+This is a Tic-Tac-Toe game written in Go that lets you challenge an unbeatable AI.
 
 ## Installation
 
 ### Prerequisites
 
-- Go 1.25.5 or higher
-
-### Setup
+Verify that Go is installed on your system (version 1.25.5 or newer recommended):
 
 ```bash
-# Clone the repository
+go version
+```
+
+If Go isn't installed, choose one of these methods:
+
+**Option 1: Using Homebrew (macOS/Linux)**
+
+```bash
+brew install go
+```
+
+**Option 2: Download from go.dev**
+
+Visit [go.dev/dl](https://go.dev/dl) and follow the installation instructions for your operating system.
+
+### Get the Game
+
+Clone the repository:
+
+```bash
 git clone https://github.com/nathandickinson32/go-tic-tac-toe.git
 cd go-tic-tac-toe
+go mod download
+```
 
-# Run the game
+## Usage
+
+To start playing:
+
+```bash
 go run .
 ```
 
-## How to Play
+### How to Play
 
-1. Run the game and select a mode (1-3)
-2. Players alternate turns
-3. Enter a number (1-9) to place your mark on the board:
+1. **Pick your players**: Select whether X and O are controlled by humans or AI
+2. **Decide who starts**: Choose which player makes the first move
+3. **Take your turn**: Enter a number from 1-9 to place your mark
+4. **Rematch?**: When the game ends, you can start a new round or quit
 
-```
- 1 | 2 | 3 
------------
- 4 | 5 | 6 
------------
- 7 | 8 | 9 
-```
+## Running Tests
 
-4. First player to get three in a row (horizontally, vertically, or diagonally) wins
-5. If all spaces are filled with no winner, the game is a draw
-
-
-### Running Tests
-
+Execute all tests:
 
 ```bash
-# Run all tests
-go test -v
-
-# Run tests with coverage
-go test -cover .
-
-# Run tests excluding long-running simulations
-go test -short .
-
-# Run specific test
-go test -run TestAIPlayer_Simulation
+go test ./... -v
 ```
 
+Run tests with coverage report:
 
+```bash
+go test -cover ./...
+```
+
+Test a specific file:
+
+```bash
+go test -v board_test.go board.go
+```

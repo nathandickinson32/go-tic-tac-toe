@@ -33,8 +33,9 @@ func (board Board) AvailableMoves() []int {
 	return moves
 }
 
-func (board Board) getCoordinates(position int) (row, col int) {
-	return (position - 1) / boardSize, (position - 1) % boardSize
+func (board Board) getCoordinates(position int) (int, int) {
+	position--
+	return position / boardSize, position % boardSize
 }
 
 func (board *Board) MakeMove(position int, player string) error {

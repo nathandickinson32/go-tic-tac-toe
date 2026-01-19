@@ -59,17 +59,30 @@ func (co *ConsoleOutput) ShowDraw() {
 	co.writer.Flush()
 }
 
-func (co *ConsoleOutput) ShowModeSelection() {
-	fmt.Fprintln(co.writer, "Tic-Tac-Toe Game Modes")
-	fmt.Fprintln(co.writer, "1. Human vs Human")
-	fmt.Fprintln(co.writer, "2. Human vs AI")
-	fmt.Fprintln(co.writer, "3. AI vs AI")
-	fmt.Fprint(co.writer, "Select mode (1-3): ")
+func (co *ConsoleOutput) ShowPlayerTypeSelection(player string) {
+	fmt.Fprintf(co.writer, "Select Player %s type:\n", player)
+	fmt.Fprintln(co.writer, "1. Human")
+	fmt.Fprintln(co.writer, "2. AI")
+	fmt.Fprintf(co.writer, "Enter choice (1-2): ")
 	co.writer.Flush()
 }
 
-func (co *ConsoleOutput) ShowModeStart(message string) {
-	fmt.Fprintf(co.writer, "Starting %s mode...\n", message)
+func (co *ConsoleOutput) ShowFirstPlayerSelection() {
+	fmt.Fprintln(co.writer, "Who goes first?")
+	fmt.Fprintln(co.writer, "1. Player X")
+	fmt.Fprintln(co.writer, "2. Player O")
+	fmt.Fprint(co.writer, "Enter choice (1-2): ")
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) ShowPlayAgainPrompt() {
+	fmt.Fprintln(co.writer, "")
+	fmt.Fprint(co.writer, "Play again? (y/n): ")
+	co.writer.Flush()
+}
+
+func (co *ConsoleOutput) ShowGoodbye() {
+	fmt.Fprintln(co.writer, "Thanks for playing!")
 	co.writer.Flush()
 }
 

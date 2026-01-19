@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"slices"
 	"testing"
 )
 
@@ -99,6 +100,218 @@ func (gameSimulator *GameSimulator) aiNeverLoses(finishedGames []BoardDepth, aiS
 		}
 	}
 	return true
+}
+
+func TestAIPlayer_ChooseBestMove(t *testing.T) {
+	rules := NewGameRules()
+	var output bytes.Buffer
+	consoleOutput := NewConsoleOutput(&output)
+
+	t.Run("returns only available move", func(t *testing.T) {
+		ai := NewAIPlayer("X", "O", rules, consoleOutput)
+
+		board := Board{
+			{"X", "2", "O"},
+			{"O", "X", "X"},
+			{"X", "O", "O"},
+		}
+
+		move, err := ai.ReadMove(board)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if move != 2 {
+			t.Errorf("should choose only available move 2, got %d", move)
+		}
+	})
+
+	t.Run("chooses corner on empty board", func(t *testing.T) {
+		ai := NewAIPlayer("X", "O", rules, consoleOutput)
+
+		board := NewBoard()
+
+		move, err := ai.ReadMove(board)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		corners := []int{1, 3, 7, 9}
+		center := 5
+		validMoves := append(corners, center)
+
+		isValid := slices.Contains(validMoves, move)
+
+		if !isValid {
+			t.Errorf("AI should choose center or corner, got %d", move)
+		}
+	})
+
+	t.Run("chooses winning move over blocking", func(t *testing.T) {
+		ai := NewAIPlayer("X", "O", rules, consoleOutput)
+
+		board := Board{
+			{"X", "X", "3"},
+			{"O", "5", "6"},
+			{"O", "8", "9"},
+		}
+
+		move, err := ai.ReadMove(board)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if move != 3 {
+			t.Errorf("AI should choose winning move 3, got %d", move)
+		}
+	})
+
+	t.Run("chooses blocking move when no winning move", func(t *testing.T) {
+		ai := NewAIPlayer("X", "O", rules, consoleOutput)
+
+		board := Board{
+			{"X", "X", "3"},
+			{"4", "O", "6"},
+			{"7", "8", "9"},
+		}
+
+		move, err := ai.ReadMove(board)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if move != 3 {
+			t.Errorf("AI should block at position 3, got %d", move)
+		}
+	})
+
+	t.Run("chooses best move for O", func(t *testing.T) {
+		ai := NewAIPlayer("O", "X", rules, consoleOutput)
+
+		board := Board{
+			{"X", "O", "X"},
+			{"4", "O", "6"},
+			{"7", "X", "9"},
+		}
+
+		move, err := ai.ReadMove(board)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		validMoves := []int{4, 6}
+		isValid := slices.Contains(validMoves, move)
+
+		if !isValid {
+			t.Errorf("AI should choose strategic move (4 or 6), got %d", move)
+		}
+	})
+
+	t.Run("chooses best move when multiple good options", func(t *testing.T) {
+		ai := NewAIPlayer("O", "X", rules, consoleOutput)
+
+		board := Board{
+			{"X", "O", "X"},
+			{"4", "5", "6"},
+			{"O", "X", "9"},
+		}
+
+		move, err := ai.ReadMove(board)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		validMoves := []int{4, 5, 6, 9}
+		isValid := slices.Contains(validMoves, move)
+
+		if !isValid {
+			t.Errorf("AI should choose valid strategic move, got %d", move)
+		}
+	})
+}
+
+func TestAIPlayer_Basics(t *testing.T) {
+	rules := NewGameRules()
+	var output bytes.Buffer
+	consoleOutput := NewConsoleOutput(&output)
+
+	t.Run("always returns valid move", func(t *testing.T) {
+		ai := NewAIPlayer("X", "O", rules, consoleOutput)
+
+		testBoards := []Board{
+			NewBoard(),
+			{
+				{"X", "O", "3"},
+				{"4", "5", "6"},
+				{"7", "8", "9"},
+			},
+			{
+				{"X", "O", "X"},
+				{"4", "5", "O"},
+				{"7", "8", "9"},
+			},
+		}
+
+		for i, board := range testBoards {
+			move, err := ai.ReadMove(board)
+
+			if err != nil {
+				t.Errorf("board %d: unexpected error: %v", i, err)
+				continue
+			}
+
+			boardCopy := board
+			if err := boardCopy.MakeMove(move, "X"); err != nil {
+				t.Errorf("board %d: AI chose invalid move %d: %v", i, move, err)
+			}
+		}
+	})
+
+	t.Run("chooses winning move", func(t *testing.T) {
+		ai := NewAIPlayer("X", "O", rules, consoleOutput)
+
+		board := Board{
+			{"X", "X", "3"},
+			{"O", "O", "6"},
+			{"7", "8", "9"},
+		}
+
+		move, err := ai.ReadMove(board)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if move != 3 {
+			t.Errorf("AI should choose winning move 3, got %d", move)
+		}
+	})
+
+	t.Run("blocks opponent winning move", func(t *testing.T) {
+		ai := NewAIPlayer("X", "O", rules, consoleOutput)
+
+		board := Board{
+			{"O", "O", "3"},
+			{"X", "5", "6"},
+			{"X", "8", "9"},
+		}
+
+		move, err := ai.ReadMove(board)
+
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if move != 3 {
+			t.Errorf("AI should block at position 3, got %d", move)
+		}
+	})
 }
 
 func TestAIPlayer_Minimax(t *testing.T) {
@@ -228,158 +441,6 @@ func TestAIPlayer_Minimax(t *testing.T) {
 	})
 }
 
-func TestAIPlayer_ChooseBestMove(t *testing.T) {
-	rules := NewGameRules()
-	var output bytes.Buffer
-	consoleOutput := NewConsoleOutput(&output)
-
-	t.Run("returns only available move", func(t *testing.T) {
-		ai := NewAIPlayer("X", "O", rules, consoleOutput)
-
-		board := Board{
-			{"X", "2", "O"},
-			{"O", "X", "X"},
-			{"X", "O", "O"},
-		}
-
-		move, err := ai.ReadMove(board)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if move != 2 {
-			t.Errorf("should choose only available move 2, got %d", move)
-		}
-	})
-
-	t.Run("chooses corner on empty board", func(t *testing.T) {
-		ai := NewAIPlayer("X", "O", rules, consoleOutput)
-
-		board := NewBoard()
-
-		move, err := ai.ReadMove(board)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		corners := []int{1, 3, 7, 9}
-		center := 5
-		validMoves := append(corners, center)
-
-		isValid := false
-		for _, valid := range validMoves {
-			if move == valid {
-				isValid = true
-				break
-			}
-		}
-
-		if !isValid {
-			t.Errorf("AI should choose center or corner, got %d", move)
-		}
-	})
-
-	t.Run("chooses winning move over blocking", func(t *testing.T) {
-		ai := NewAIPlayer("X", "O", rules, consoleOutput)
-
-		board := Board{
-			{"X", "X", "3"},
-			{"O", "5", "6"},
-			{"O", "8", "9"},
-		}
-
-		move, err := ai.ReadMove(board)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if move != 3 {
-			t.Errorf("AI should choose winning move 3, got %d", move)
-		}
-	})
-
-	t.Run("chooses blocking move when no winning move", func(t *testing.T) {
-		ai := NewAIPlayer("X", "O", rules, consoleOutput)
-
-		board := Board{
-			{"X", "X", "3"},
-			{"4", "O", "6"},
-			{"7", "8", "9"},
-		}
-
-		move, err := ai.ReadMove(board)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if move != 3 {
-			t.Errorf("AI should block at position 3, got %d", move)
-		}
-	})
-
-	t.Run("chooses best move for O", func(t *testing.T) {
-		ai := NewAIPlayer("O", "X", rules, consoleOutput)
-
-		board := Board{
-			{"X", "O", "X"},
-			{"4", "O", "6"},
-			{"7", "X", "9"},
-		}
-
-		move, err := ai.ReadMove(board)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		validMoves := []int{4, 6}
-		isValid := false
-		for _, valid := range validMoves {
-			if move == valid {
-				isValid = true
-				break
-			}
-		}
-
-		if !isValid {
-			t.Errorf("AI should choose strategic move (4 or 6), got %d", move)
-		}
-	})
-
-	t.Run("chooses best move when multiple good options", func(t *testing.T) {
-		ai := NewAIPlayer("O", "X", rules, consoleOutput)
-
-		board := Board{
-			{"X", "O", "X"},
-			{"4", "5", "6"},
-			{"O", "X", "9"},
-		}
-
-		move, err := ai.ReadMove(board)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		validMoves := []int{4, 5, 6, 9}
-		isValid := false
-		for _, valid := range validMoves {
-			if move == valid {
-				isValid = true
-				break
-			}
-		}
-
-		if !isValid {
-			t.Errorf("AI should choose valid strategic move, got %d", move)
-		}
-	})
-}
-
 func TestAIPlayer_Simulation(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping simulation in short mode")
@@ -425,84 +486,6 @@ func TestAIPlayer_Simulation(t *testing.T) {
 		}
 
 		t.Logf("Simulated %d complete games: AI never lost", len(finishedGames))
-	})
-}
-
-func TestAIPlayer_Basics(t *testing.T) {
-	rules := NewGameRules()
-	var output bytes.Buffer
-	consoleOutput := NewConsoleOutput(&output)
-
-	t.Run("always returns valid move", func(t *testing.T) {
-		ai := NewAIPlayer("X", "O", rules, consoleOutput)
-
-		testBoards := []Board{
-			NewBoard(),
-			{
-				{"X", "O", "3"},
-				{"4", "5", "6"},
-				{"7", "8", "9"},
-			},
-			{
-				{"X", "O", "X"},
-				{"4", "5", "O"},
-				{"7", "8", "9"},
-			},
-		}
-
-		for i, board := range testBoards {
-			move, err := ai.ReadMove(board)
-
-			if err != nil {
-				t.Errorf("board %d: unexpected error: %v", i, err)
-				continue
-			}
-
-			boardCopy := board
-			if err := boardCopy.MakeMove(move, "X"); err != nil {
-				t.Errorf("board %d: AI chose invalid move %d: %v", i, move, err)
-			}
-		}
-	})
-
-	t.Run("chooses winning move", func(t *testing.T) {
-		ai := NewAIPlayer("X", "O", rules, consoleOutput)
-
-		board := Board{
-			{"X", "X", "3"},
-			{"O", "O", "6"},
-			{"7", "8", "9"},
-		}
-
-		move, err := ai.ReadMove(board)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if move != 3 {
-			t.Errorf("AI should choose winning move 3, got %d", move)
-		}
-	})
-
-	t.Run("blocks opponent winning move", func(t *testing.T) {
-		ai := NewAIPlayer("X", "O", rules, consoleOutput)
-
-		board := Board{
-			{"O", "O", "3"},
-			{"X", "5", "6"},
-			{"X", "8", "9"},
-		}
-
-		move, err := ai.ReadMove(board)
-
-		if err != nil {
-			t.Fatalf("unexpected error: %v", err)
-		}
-
-		if move != 3 {
-			t.Errorf("AI should block at position 3, got %d", move)
-		}
 	})
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"strings"
@@ -10,9 +11,9 @@ import (
 func StartGame(reader io.Reader, writer io.Writer) {
 	rules := NewGameRules()
 	output := NewConsoleOutput(writer)
-	input := NewConsoleInput(reader, output)
-	game := NewGame(rules, input, input, output)
-	game.Start()
+	input := NewConsoleInput(bufio.NewReader(reader), output)
+	game := NewGame(rules, input, input, output, "X")
+	game.PlayGame()
 }
 
 func runGame(input string) string {
@@ -23,15 +24,6 @@ func runGame(input string) string {
 }
 
 func TestGame_Flow(t *testing.T) {
-	t.Run("displays welcome message", func(t *testing.T) {
-		input := "1\n2\n3\n4\n5\n6\n7\n8\n9\n"
-		got := runGame(input)
-		want := "Welcome to Tic-Tac-Toe!"
-
-		if !strings.Contains(got, want) {
-			t.Errorf("missing welcome message.\nGot:\n%s", got)
-		}
-	})
 
 	t.Run("alternates between players", func(t *testing.T) {
 		input := "1\n2\n3\n4\n5\n6\n7\n8\n9\n"
@@ -56,26 +48,6 @@ func TestGame_Flow(t *testing.T) {
 
 		if !strings.Contains(got, " O | 2 | 3 \n-----------\n 4 | X | 6 \n-----------\n 7 | 8 | 9") {
 			t.Error("board not displayed after O's first move")
-		}
-	})
-
-	t.Run("player X starts first", func(t *testing.T) {
-		input := "1\n2\n3\n4\n5\n6\n7\n8\n9\n"
-		got := runGame(input)
-
-		xPos := strings.Index(got, "Player X's turn")
-		oPos := strings.Index(got, "Player O's turn")
-
-		if xPos == -1 {
-			t.Error("Player X's turn not found")
-		}
-
-		if oPos == -1 {
-			t.Error("Player O's turn not found")
-		}
-
-		if xPos >= oPos {
-			t.Error("Player X should go before Player O")
 		}
 	})
 

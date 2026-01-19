@@ -1,5 +1,10 @@
 package main
 
+import (
+	"bufio"
+	"os"
+)
+
 type Game struct {
 	board         Board
 	rules         *GameRules
@@ -14,61 +19,22 @@ func NewGame(
 	playerXInput InputReader,
 	playerOInput InputReader,
 	output *ConsoleOutput,
-) *Game {
+	firstPlayer string) *Game {
 	return &Game{
 		board:         NewBoard(),
 		rules:         rules,
 		playerXInput:  playerXInput,
 		playerOInput:  playerOInput,
 		output:        output,
-		currentPlayer: "X",
+		currentPlayer: firstPlayer,
 	}
 }
 
-func (game *Game) Start() {
-	game.output.ShowWelcome()
-	game.output.ShowBoard(game.board)
-	game.playTurns()
-}
-
-func (game *Game) playTurns() {
-	for {
-		game.output.ShowPlayerTurn(game.currentPlayer)
-
-		input := game.getInputForCurrentPlayer()
-		position, err := input.ReadMove(game.board)
-		if err != nil {
-			return
-		}
-
-		if err := game.board.MakeMove(position, game.currentPlayer); err != nil {
-			return
-		}
-		game.output.ShowBoard(game.board)
-
-		if game.checkEndCondition() {
-			break
-		}
-
-		game.switchPlayer()
-	}
-}
-
-func (game *Game) getInputForCurrentPlayer() InputReader {
+func (game *Game) getCurrentPlayerInput() InputReader {
 	if game.currentPlayer == "X" {
 		return game.playerXInput
 	}
 	return game.playerOInput
-}
-
-func (game *Game) checkEndCondition() bool {
-	status := game.rules.GetGameStatus(game.board)
-	if status == InProgress {
-		return false
-	}
-
-	game.displayEndResult(status)
-	return true
 }
 
 func (game *Game) switchPlayer() {
@@ -87,5 +53,74 @@ func (game *Game) displayEndResult(status GameStatus) {
 		game.output.ShowWinner("O")
 	case Draw:
 		game.output.ShowDraw()
+	}
+}
+
+func (game *Game) playTurns() {
+	for {
+		game.output.ShowPlayerTurn(game.currentPlayer)
+
+		position, err := game.getCurrentPlayerInput().ReadMove(game.board)
+		if err != nil {
+			break
+		}
+
+		if err := game.board.MakeMove(position, game.currentPlayer); err != nil {
+			break
+		}
+
+		game.output.ShowBoard(game.board)
+
+		if status := game.rules.GetGameStatus(game.board); status != InProgress {
+			game.displayEndResult(status)
+			break
+		}
+
+		game.switchPlayer()
+	}
+}
+
+func (game *Game) PlayGame() {
+	game.output.ShowWelcome()
+	game.output.ShowBoard(game.board)
+	game.playTurns()
+}
+
+func buildGame(reader *bufio.Reader, input *ConsoleInput, output *ConsoleOutput) *Game {
+	output.ShowPlayerTypeSelection("X")
+	playerXType, _ := input.ReadPlayerType()
+
+	output.ShowPlayerTypeSelection("O")
+	playerOType, _ := input.ReadPlayerType()
+
+	output.ShowFirstPlayerSelection()
+	firstPlayer, _ := input.ReadFirstPlayer()
+
+	output.ShowNewline()
+
+	rules := NewGameRules()
+	playerXInput := createPlayerInput(playerXType, "X", "O", reader, output, rules)
+	playerOInput := createPlayerInput(playerOType, "O", "X", reader, output, rules)
+
+	return NewGame(rules, playerXInput, playerOInput, output, firstPlayer)
+}
+
+func startGame(output *ConsoleOutput) {
+	reader := bufio.NewReader(os.Stdin)
+	input := NewConsoleInput(reader, output)
+
+	for {
+		output.ShowNewline()
+
+		game := buildGame(reader, input, output)
+		game.PlayGame()
+
+		output.ShowPlayAgainPrompt()
+		playAgain, err := input.ReadPlayAgain()
+
+		if err != nil || !playAgain {
+			output.ShowGoodbye()
+			break
+		}
 	}
 }

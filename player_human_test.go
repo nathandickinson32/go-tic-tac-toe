@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"strings"
 	"testing"
@@ -9,7 +10,7 @@ import (
 func TestConsoleInput_ParseInput(t *testing.T) {
 	var output bytes.Buffer
 	consoleOutput := NewConsoleOutput(&output)
-	ci := NewConsoleInput(nil, consoleOutput)
+	ci := NewConsoleInput(bufio.NewReader(strings.NewReader("")), consoleOutput)
 
 	t.Run("non-number", func(t *testing.T) {
 		input := "abc"
@@ -108,7 +109,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		input := "\n\n5\n"
 		var output bytes.Buffer
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		got, err := ci.ReadMove(board)
 
@@ -126,7 +127,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		input := "abc\n5\n"
 		var output bytes.Buffer
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		got, err := ci.ReadMove(board)
 
@@ -144,7 +145,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		input := "0\n10\n-1\n5\n"
 		var output bytes.Buffer
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		got, err := ci.ReadMove(board)
 
@@ -164,7 +165,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		input := "5\n7\n"
 		var output bytes.Buffer
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		got, err := ci.ReadMove(board)
 
@@ -182,7 +183,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		input := "  5  \n"
 		var output bytes.Buffer
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		got, err := ci.ReadMove(board)
 
@@ -200,7 +201,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		input := "5\n"
 		var output bytes.Buffer
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		got, err := ci.ReadMove(board)
 
@@ -219,7 +220,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		var output bytes.Buffer
 
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		_, err := ci.ReadMove(board)
 		if err != nil {
@@ -240,7 +241,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		var output bytes.Buffer
 
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		_, err := ci.ReadMove(board)
 		if err != nil {
@@ -261,7 +262,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		var output bytes.Buffer
 
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		_, err := ci.ReadMove(board)
 		if err != nil {
@@ -282,7 +283,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		var output bytes.Buffer
 
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		_, err := ci.ReadMove(board)
 		if err != nil {
@@ -304,7 +305,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		var output bytes.Buffer
 
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		_, err := ci.ReadMove(board)
 		if err != nil {
@@ -326,7 +327,7 @@ func TestConsoleInput_ReadMove(t *testing.T) {
 		var output bytes.Buffer
 
 		consoleOutput := NewConsoleOutput(&output)
-		ci := NewConsoleInput(strings.NewReader(input), consoleOutput)
+		ci := NewConsoleInput(bufio.NewReader(strings.NewReader(input)), consoleOutput)
 
 		_, err := ci.ReadMove(board)
 		if err != nil {
