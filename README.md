@@ -30,8 +30,7 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/nathandickinson32/go-tic-tac-toe.git
-cd go-tic-tac-toe
-go mod download
+cd go-tic-tac-toe/ttt
 ```
 
 ## Usage
@@ -66,5 +65,8 @@ go test -cover ./...
 Test a specific file:
 
 ```bash
-go test -v board_test.go board.go
+go test ./boards
+go test ./game
+go test ./io
+go test ./players
 ```

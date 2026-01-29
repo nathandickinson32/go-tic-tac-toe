@@ -1,47 +1,47 @@
-package main
+package players
 
-import "math"
+import (
+	"math"
+	"ttt/boards"
+)
+
+const (
+	WinScore     = 10.0
+	DrawScore    = 0.0
+	DepthPenalty = 1.0
+)
 
 type AIPlayer struct {
 	playerSymbol   string
 	opponentSymbol string
-	rules          *GameRules
-	output         *ConsoleOutput
 }
 
-func NewAIPlayer(
-	playerSymbol string,
-	opponentSymbol string,
-	rules *GameRules,
-	output *ConsoleOutput,
-) *AIPlayer {
+func NewAIPlayer(playerSymbol string, opponentSymbol string) *AIPlayer {
 	return &AIPlayer{
 		playerSymbol:   playerSymbol,
 		opponentSymbol: opponentSymbol,
-		rules:          rules,
-		output:         output,
 	}
 }
 
-func (ai *AIPlayer) getTerminalScore(board Board, depth int) (float64, bool) {
-	winner := ai.rules.CheckWinner(board)
+func (ai *AIPlayer) getTerminalScore(board boards.Board, depth int) (float64, bool) {
+	winner := board.CheckWinner()
 
 	if winner == ai.playerSymbol {
-		return 10.0 - float64(depth), true
+		return WinScore - float64(depth)*DepthPenalty, true
 	}
 
 	if winner == ai.opponentSymbol {
-		return float64(depth) - 10.0, true
+		return float64(depth)*DepthPenalty - WinScore, true
 	}
 
-	if ai.rules.GetGameStatus(board) == Draw {
-		return 0.0, true
+	if board.GetGameStatus() == boards.Draw {
+		return DrawScore, true
 	}
 
-	return 0.0, false
+	return DrawScore, false
 }
 
-func (ai *AIPlayer) evaluateMoveForPlayer(board Board, move int, player string, depth int, isMaximizing bool) float64 {
+func (ai *AIPlayer) evaluateMoveForPlayer(board boards.Board, move int, player string, depth int, isMaximizing bool) float64 {
 	boardCopy := board
 	if err := boardCopy.MakeMove(move, player); err != nil {
 		if isMaximizing {
@@ -52,7 +52,7 @@ func (ai *AIPlayer) evaluateMoveForPlayer(board Board, move int, player string, 
 	return ai.minimax(boardCopy, depth+1, isMaximizing)
 }
 
-func (ai *AIPlayer) minimizeScore(board Board, depth int) float64 {
+func (ai *AIPlayer) minimizeScore(board boards.Board, depth int) float64 {
 	minScore := math.Inf(1)
 
 	for _, move := range board.AvailableMoves() {
@@ -63,7 +63,7 @@ func (ai *AIPlayer) minimizeScore(board Board, depth int) float64 {
 	return minScore
 }
 
-func (ai *AIPlayer) maximizeScore(board Board, depth int) float64 {
+func (ai *AIPlayer) maximizeScore(board boards.Board, depth int) float64 {
 	maxScore := math.Inf(-1)
 
 	for _, move := range board.AvailableMoves() {
@@ -74,7 +74,7 @@ func (ai *AIPlayer) maximizeScore(board Board, depth int) float64 {
 	return maxScore
 }
 
-func (ai *AIPlayer) minimax(board Board, depth int, isMaximizing bool) float64 {
+func (ai *AIPlayer) minimax(board boards.Board, depth int, isMaximizing bool) float64 {
 	if score, isTerminal := ai.getTerminalScore(board, depth); isTerminal {
 		return score
 	}
@@ -85,7 +85,7 @@ func (ai *AIPlayer) minimax(board Board, depth int, isMaximizing bool) float64 {
 	return ai.minimizeScore(board, depth)
 }
 
-func (ai *AIPlayer) evaluateMove(board Board, move int) float64 {
+func (ai *AIPlayer) evaluateMove(board boards.Board, move int) float64 {
 	boardCopy := board
 	if err := boardCopy.MakeMove(move, ai.playerSymbol); err != nil {
 		return math.Inf(-1)
@@ -93,7 +93,7 @@ func (ai *AIPlayer) evaluateMove(board Board, move int) float64 {
 	return ai.minimax(boardCopy, 0, false)
 }
 
-func (ai *AIPlayer) findBestMove(board Board) int {
+func (ai *AIPlayer) findBestMove(board boards.Board) int {
 	bestScore := math.Inf(-1)
 	bestMove := 0
 
@@ -108,7 +108,7 @@ func (ai *AIPlayer) findBestMove(board Board) int {
 	return bestMove
 }
 
-func (ai *AIPlayer) ReadMove(board Board) (int, error) {
+func (ai *AIPlayer) ReadMove(board boards.Board) (int, error) {
 	bestMove := ai.findBestMove(board)
 	return bestMove, nil
 }
