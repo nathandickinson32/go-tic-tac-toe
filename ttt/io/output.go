@@ -13,7 +13,7 @@ const (
 	GridSeparator   = "-----------"
 	GridDivider     = " | "
 	CellPadding     = " "
-	NewlineChar     = "\n"
+	NewlineChar     = "\n" // Does Go have an Environment variable for newline characters?
 	RowsPerBoard    = 3
 	ColumnsPerRow   = 3
 )
@@ -76,7 +76,14 @@ func formatBoard(board boards.Board) string {
 	var display strings.Builder
 
 	for row := range RowsPerBoard {
-		display.WriteString(CellPadding + board[row][0] + GridDivider + board[row][1] + GridDivider + board[row][2] + CellPadding)
+		display.WriteString(
+			CellPadding +
+				board[row][0] +
+				GridDivider +
+				board[row][1] +
+				GridDivider +
+				board[row][2] +
+				CellPadding)
 
 		if row < RowsPerBoard-1 {
 			display.WriteString(NewlineChar + GridSeparator + NewlineChar)

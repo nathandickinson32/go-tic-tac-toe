@@ -34,11 +34,8 @@ func (ai *AIPlayer) getTerminalScore(board boards.Board, depth int) (float64, bo
 		return float64(depth)*DepthPenalty - WinScore, true
 	}
 
-	if board.GetGameStatus() == boards.Draw {
-		return DrawScore, true
-	}
-
-	return DrawScore, false
+	isTerminal := board.GetGameStatus() == boards.Draw
+	return DrawScore, isTerminal
 }
 
 func (ai *AIPlayer) evaluateMoveForPlayer(board boards.Board, move int, player string, depth int, isMaximizing bool) float64 {

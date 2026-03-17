@@ -22,9 +22,9 @@ func NewHumanPlayer(reader *bufio.Reader, output io.Writer) *HumanPlayer {
 	}
 }
 
-func (humanPlayer *HumanPlayer) isPositionAvailable(board boards.Board, position int) bool {
-	return board.IsPositionValid(position)
-}
+// func (humanPlayer *HumanPlayer) isPositionAvailable(board boards.Board, position int) bool {
+// 	return board.IsPositionValid(position)
+// }
 
 var (
 	ErrEmptyInput = errors.New("Input cannot be empty")
@@ -35,7 +35,7 @@ var (
 func (humanPlayer *HumanPlayer) parseInput(input string) (int, error) {
 	input = strings.TrimSpace(input)
 
-	if input == "" {
+	if input == "" { //use EmptyInput?
 		return 0, ErrEmptyInput
 	}
 
@@ -44,6 +44,7 @@ func (humanPlayer *HumanPlayer) parseInput(input string) (int, error) {
 		return 0, ErrNotNumber
 	}
 
+	// Duplicated 3 times. Why not something like boards.IsOutOfRange(position)?
 	if position < boards.MinPosition || position > boards.MaxPosition {
 		return 0, ErrOutOfRange
 	}
@@ -76,7 +77,7 @@ func (humanPlayer *HumanPlayer) ReadMove(board boards.Board) (int, error) {
 			return 0, err
 		}
 
-		if humanPlayer.isPositionAvailable(board, position) {
+		if board.IsPositionValid(position) {
 			return position, nil
 		}
 

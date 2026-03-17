@@ -3,7 +3,6 @@ package game
 import (
 	"bufio"
 	"io"
-	"os"
 	"ttt/boards"
 	tttio "ttt/io"
 	"ttt/players"
@@ -65,13 +64,15 @@ func (game *Game) playTurns() {
 			break
 		}
 
-		if err := game.board.MakeMove(position, game.currentPlayer); err != nil {
+		err = game.board.MakeMove(position, game.currentPlayer)
+		if err != nil {
 			break
 		}
 
 		tttio.ShowBoard(game.output, game.board)
 
-		if status := game.board.GetGameStatus(); status != boards.InProgress {
+		status := game.board.GetGameStatus()
+		if status != boards.InProgress {
 			game.displayEndResult(status)
 			break
 		}
@@ -102,21 +103,21 @@ func BuildGame(reader *bufio.Reader, output io.Writer) *Game {
 }
 
 func StartGame() {
-	reader := bufio.NewReader(os.Stdin)
-	output := os.Stdout
+	// reader := bufio.NewReader(os.Stdin)
+	// output := os.Stdout
 
-	for {
-		tttio.ShowNewline(output)
+	// for {
+	// 	tttio.ShowNewline(output)
 
-		game := BuildGame(reader, output)
-		game.PlayGame()
+	// 	game := BuildGame(reader, output)
+	// 	game.PlayGame()
 
-		tttio.ShowPlayAgainPrompt(output)
-		playAgain, err := tttio.ReadPlayAgain(reader, output)
+	// 	tttio.ShowPlayAgainPrompt(output)
+	// 	playAgain, err := tttio.ReadPlayAgain(reader, output)
 
-		if err != nil || !playAgain {
-			tttio.ShowGoodbye(output)
-			break
-		}
-	}
+	// 	if err != nil || !playAgain {
+	// 		tttio.ShowGoodbye(output)
+	// 		break
+	// 	}
+	// }
 }

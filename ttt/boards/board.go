@@ -36,12 +36,11 @@ var winningLines = [8][3][2]int{
 
 func NewBoard() Board {
 	var board Board
-	cell := MinPosition
 
 	for row := range boardSize {
 		for col := range boardSize {
+			cell := boardSize*(row) + col + MinPosition // duplicated below
 			board[row][col] = fmt.Sprintf("%d", cell)
-			cell++
 		}
 	}
 	return board
@@ -52,18 +51,17 @@ func (board Board) IsPositionValid(position int) bool {
 		return false
 	}
 	row, col := board.getCoordinates(position)
-	return board[row][col] != PlayerX && board[row][col] != PlayerO
+	return board[row][col] != PlayerX && board[row][col] != PlayerO // duplicated in fn below
 }
 
 func (board Board) AvailableMoves() []int {
 	var moves []int
-	cell := MinPosition
 	for row := range boardSize {
 		for col := range boardSize {
 			if board[row][col] != PlayerX && board[row][col] != PlayerO {
+				cell := boardSize*(row) + col + MinPosition // maybe needs its own fn
 				moves = append(moves, cell)
 			}
-			cell++
 		}
 	}
 	return moves
@@ -88,12 +86,21 @@ func (board *Board) MakeMove(position int, player string) error {
 	return nil
 }
 
+func tokenAtCell(board Board, cell [2]int) string {
+	row := cell[0]
+	col := cell[1]
+	return board[row][col]
+}
+
 func (board Board) CheckWinner() string {
 	for _, line := range winningLines {
-		firstPosition := board[line[0][0]][line[0][1]]
+		// firstPosition := board[line[0][0]][line[0][1]]
+		firstPosition := tokenAtCell(board, line[0])
 		secondPosition := board[line[1][0]][line[1][1]]
 		thirdPosition := board[line[2][0]][line[2][1]]
 
+		// What am I looking at?
+		// This could be a function returning a boolean
 		if firstPosition == secondPosition &&
 			secondPosition == thirdPosition &&
 			(firstPosition == PlayerX || firstPosition == PlayerO) {

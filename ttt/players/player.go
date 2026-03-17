@@ -9,6 +9,7 @@ import (
 
 type Player interface {
 	ReadMove(board boards.Board) (int, error)
+	//GetToken() string // maybe?
 }
 
 func CreatePlayer(
